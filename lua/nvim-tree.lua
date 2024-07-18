@@ -153,7 +153,7 @@ function M.change_dir(name)
     actions.tree.find_file.fn()
   end
 end
-
+local last_visited = 0
 ---@param opts table
 local function setup_autocommands(opts)
   local augroup_id = vim.api.nvim_create_augroup("NvimTree", { clear = true })
@@ -197,11 +197,13 @@ local function setup_autocommands(opts)
   create_nvim_tree_autocmd("BufReadPost", {
     callback = function(data)
       -- update opened file buffers
-      if (filters.config.filter_no_buffer or renderer.config.highlight_opened_files ~= "none") and vim.bo[data.buf].buftype == "" then
-        utils.debounce("Buf:filter_buffer", opts.view.debounce_delay, function()
-          actions.reloaders.reload_explorer()
-        end)
-      end
+      vim.defer_fn(function()
+        if (filters.config.filter_no_buffer or renderer.config.highlight_opened_files ~= "none") and vim.bo[data.buf].buftype == "" then
+          utils.debounce("Buf:filter_buffer", opts.view.debounce_delay, function()
+            actions.reloaders.reload_explorer()
+          end)
+        end
+      end, 30)
     end,
   })
 
@@ -248,19 +250,48 @@ local function setup_autocommands(opts)
   if opts.update_focused_file.enable then
     create_nvim_tree_autocmd("BufEnter", {
       callback = function(event)
+        if event.file == "" or not vim.api.nvim_buf_is_valid(event.buf) then
+          return
+        end
+        if event.buf == last_visited then
+          return
+        end
         local exclude = opts.update_focused_file.exclude
         if type(exclude) == "function" and exclude(event) then
           return
         end
-        utils.debounce("BufEnter:find_file", opts.view.debounce_delay, function()
-          actions.tree.find_file.fn()
+
+        local col = vim.fn.screencol()
+        local row = vim.fn.screenrow()
+        vim.schedule(function()
+          local new_col = vim.fn.screencol()
+          local new_row = vim.fn.screenrow()
+          if new_col ~= col or new_row ~= row then
+            actions.tree.find_file.fn()
+            last_visited = event.buf
+          else
+            vim.defer_fn(function()
+              print "nvimtree defer"
+              actions.tree.find_file.fn()
+              last_visited = event.buf
+            end, 10)
+          end
         end)
+        -- require("config.utils").real_enter(function() end, function()
+        --   return vim.api.nvim_buf_is_valid(event.buf)
+        -- end, "nvimtree refresh")
       end,
     })
   end
 
   if opts.hijack_directories.enable then
-    create_nvim_tree_autocmd({ "BufEnter", "BufNewFile" }, { callback = M.open_on_directory })
+    create_nvim_tree_autocmd({ "BufEnter", "BufNewFile" }, {
+      callback = function()
+        vim.defer_fn(function()
+          M.open_on_directory()
+        end, 40)
+      end,
+    })
   end
 
   create_nvim_tree_autocmd("BufEnter", {

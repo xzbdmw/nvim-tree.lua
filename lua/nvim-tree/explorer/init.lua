@@ -34,6 +34,10 @@ end
 ---@private
 ---@param node Node
 function Explorer:_load(node)
+  -- absolute_path = "/Users/xzb/.config/nvim/oil-ssh:",
+  -- if vim.endswith(node.absolute_path, "oil-ssh:") then
+  --   return
+  -- end
   local cwd = node.link_to or node.absolute_path
   local git_status = git.load_project_status(cwd)
   M.explore(node, git_status)

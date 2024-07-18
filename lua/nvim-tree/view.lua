@@ -97,8 +97,15 @@ local function create_buffer(bufnr)
 
   local tab = vim.api.nvim_get_current_tabpage()
   BUFNR_PER_TAB[tab] = bufnr or vim.api.nvim_create_buf(false, false)
-  vim.api.nvim_buf_set_name(M.get_bufnr(), "NvimTree_" .. tab)
-
+  local success = pcall(vim.api.nvim_buf_set_name, M.get_bufnr(), "NvimTree_" .. tab)
+  -- if not success then
+  --   for _, buffer in ipairs(vim.api.nvim_list_bufs()) do
+  --     local name = vim.api.nvim_buf_get_name(buffer)
+  --     if name == "NvimTree_1" then
+  --       vim.vim.api.nvim_buf_delete(buffer, { force = true })
+  --     end
+  --   end
+  -- end
   for option, value in pairs(BUFFER_OPTIONS) do
     vim.bo[M.get_bufnr()][option] = value
   end
