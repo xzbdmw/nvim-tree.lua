@@ -260,26 +260,20 @@ local function setup_autocommands(opts)
         if type(exclude) == "function" and exclude(event) then
           return
         end
-
-        local col = vim.fn.screencol()
-        local row = vim.fn.screenrow()
-        vim.schedule(function()
-          local new_col = vim.fn.screencol()
-          local new_row = vim.fn.screenrow()
-          if new_col ~= col or new_row ~= row then
+        local start = vim.uv.hrtime()
+        local function follow_node()
+          local duration = 0.000001 * (vim.loop.hrtime() - start)
+          if duration > 2000 then
+            return
+          end
+          if vim.b.ts_parse_over then
             actions.tree.find_file.fn()
             last_visited = event.buf
           else
-            vim.defer_fn(function()
-              print "nvimtree defer"
-              actions.tree.find_file.fn()
-              last_visited = event.buf
-            end, 10)
+            vim.defer_fn(follow_node, 1)
           end
-        end)
-        -- require("config.utils").real_enter(function() end, function()
-        --   return vim.api.nvim_buf_is_valid(event.buf)
-        -- end, "nvimtree refresh")
+        end
+        follow_node()
       end,
     })
   end
