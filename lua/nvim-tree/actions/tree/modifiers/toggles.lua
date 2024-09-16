@@ -31,6 +31,11 @@ function M.no_buffer()
   reload()
 end
 
+function M.no_arrow()
+  filters.config.filter_no_arrow = not filters.config.filter_no_arrow
+  reload()
+end
+
 function M.no_bookmark()
   filters.config.filter_no_bookmark = not filters.config.filter_no_bookmark
   reload()

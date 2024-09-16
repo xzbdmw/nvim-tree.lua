@@ -64,6 +64,25 @@ local function buf(path, bufinfo)
   return true
 end
 
+---Check if the given path has no listed arrow
+---@param path string Absolute path
+---@return boolean
+local function arrow(path)
+  if not M.config.filter_no_arrow then
+    return false
+  end
+
+  local arrow_filenames = vim.g.arrow_filenames
+  for _, arrow_file in ipairs(arrow_filenames) do
+    arrow_file = vim.loop.cwd() .. "/" .. arrow_file
+    if arrow_file == path or arrow_file:find(path .. "/", 1, true) then
+      return false
+    end
+  end
+
+  return true
+end
+
 ---@param path string
 ---@return boolean
 local function dotfile(path)
@@ -159,7 +178,13 @@ function M.should_filter(path, status)
     return false
   end
 
-  return git(path, status.git_status) or buf(path, status.bufinfo) or dotfile(path) or custom(path) or bookmark(path, status.bookmarks)
+  -- print(debug.traceback())
+  return git(path, status.git_status)
+    or buf(path, status.bufinfo)
+    or dotfile(path)
+    or custom(path)
+    or bookmark(path, status.bookmarks)
+    or arrow(path)
 end
 
 function M.setup(opts)
@@ -170,6 +195,7 @@ function M.setup(opts)
     filter_git_ignored = opts.filters.git_ignored,
     filter_git_clean = opts.filters.git_clean,
     filter_no_buffer = opts.filters.no_buffer,
+    filter_no_arrow = opts.filters.no_arrow,
     filter_no_bookmark = opts.filters.no_bookmark,
   }
 
