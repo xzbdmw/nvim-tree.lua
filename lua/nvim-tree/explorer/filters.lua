@@ -178,7 +178,6 @@ function M.should_filter(path, status)
     return false
   end
 
-  -- print(debug.traceback())
   return git(path, status.git_status)
     or buf(path, status.bufinfo)
     or dotfile(path)

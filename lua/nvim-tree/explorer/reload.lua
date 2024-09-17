@@ -222,7 +222,7 @@ function M.refresh_parent_nodes_for_path(path)
 
   -- refresh in order; this will expand groups as needed
   for _, node in ipairs(parent_nodes) do
-    local toplevel = git.get_toplevel(node.absolute_path)
+    local toplevel = vim.loop.cwd()
     local project = git.get_project(toplevel) or {}
 
     M.reload(node, project)
