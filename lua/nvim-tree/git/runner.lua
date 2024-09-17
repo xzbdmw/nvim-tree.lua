@@ -179,7 +179,7 @@ function Runner:_wait()
     return self.rc ~= nil
   end
 
-  while not vim.wait(30, is_done) do
+  while not vim.wait(10, is_done) do
   end
 end
 
