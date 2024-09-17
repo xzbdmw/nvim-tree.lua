@@ -186,16 +186,6 @@ local function setup_autocommands(opts)
     end,
   })
 
-  create_nvim_tree_autocmd("BufWritePost", {
-    callback = function()
-      if opts.auto_reload_on_write and not opts.filesystem_watchers.enable then
-        vim.defer_fn(function()
-          actions.reloaders.reload_explorer()
-        end, 10)
-      end
-    end,
-  })
-
   create_nvim_tree_autocmd("BufReadPost", {
     callback = function(data)
       -- update opened file buffers
@@ -205,7 +195,7 @@ local function setup_autocommands(opts)
             actions.reloaders.reload_explorer()
           end)
         end
-      end, 30)
+      end, 100)
     end,
   })
 
@@ -213,9 +203,11 @@ local function setup_autocommands(opts)
     callback = function(data)
       -- update opened file buffers
       if (filters.config.filter_no_buffer or renderer.config.highlight_opened_files ~= "none") and vim.bo[data.buf].buftype == "" then
-        utils.debounce("Buf:filter_buffer", opts.view.debounce_delay, function()
-          actions.reloaders.reload_explorer()
-        end)
+        vim.defer_fn(function()
+          utils.debounce("Buf:filter_buffer", opts.view.debounce_delay, function()
+            actions.reloaders.reload_explorer()
+          end)
+        end, 100)
       end
     end,
   })
