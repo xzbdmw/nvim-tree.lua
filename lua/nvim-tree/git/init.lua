@@ -104,7 +104,7 @@ function M.reload_project(toplevel, path, callback)
   local opts = {
     toplevel = toplevel,
     path = path,
-    list_untracked = git_utils.should_show_untracked(toplevel),
+    list_untracked = true,
     list_ignored = true,
     timeout = M.config.git.timeout,
   }

@@ -69,15 +69,15 @@ function M.should_show_untracked(cwd)
 
   local profile = log.profile_start("git untracked %s", cwd)
 
-  local cmd = { "git", "-C", cwd, "config", "status.showUntrackedFiles" }
-  log.line("git", table.concat(cmd, " "))
-
-  local has_untracked = vim.fn.system(cmd)
-
-  log.raw("git", has_untracked)
-  log.profile_end(profile)
-
-  untracked[cwd] = vim.trim(has_untracked) ~= "no"
+  -- local cmd = { "git", "-C", cwd, "config", "status.showUntrackedFiles" }
+  -- log.line("git", table.concat(cmd, " "))
+  --
+  -- local has_untracked = vim.fn.system(cmd)
+  --
+  -- log.raw("git", has_untracked)
+  -- log.profile_end(profile)
+  --
+  untracked[cwd] = true
   return untracked[cwd]
 end
 
