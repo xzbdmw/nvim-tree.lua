@@ -1,4 +1,5 @@
 local git = require "nvim-tree.git"
+local git_utils = require "nvim-tree.git.utils"
 local view = require "nvim-tree.view"
 local renderer = require "nvim-tree.renderer"
 local explorer_module = require "nvim-tree.explorer"
@@ -54,6 +55,28 @@ function M.reload_explorer()
     renderer.draw()
   end
   event_running = false
+end
+
+function M.reload_explorer_with_git()
+  if event_running or not core.get_explorer() or vim.v.exiting ~= vim.NIL then
+    return
+  end
+  event_running = true
+  local cwd = vim.loop.cwd()
+  git.reload(function(output)
+    local new_cwd = vim.loop.cwd()
+    local obj = {}
+    obj[cwd] = {
+      files = output,
+      dirs = git_utils.file_status_to_dir_status(output, cwd),
+      watcher = nil,
+    }
+    refresh_nodes(core.get_explorer(), obj)
+    if view.is_visible() then
+      renderer.draw()
+    end
+    event_running = false
+  end)
 end
 
 function M.reload_git()

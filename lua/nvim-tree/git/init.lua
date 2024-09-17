@@ -68,14 +68,15 @@ local function path_ignored_in_project(path, project)
 end
 
 --- Reload all projects
+--- @param callback  function|nil
 ---@return table projects maybe empty
-function M.reload()
+function M.reload(callback)
   if not M.config.git.enable then
     return {}
   end
 
   for toplevel in pairs(M._projects_by_toplevel) do
-    M.reload_project(toplevel)
+    M.reload_project(toplevel, nil, nil, callback)
   end
 
   return M._projects_by_toplevel
@@ -85,7 +86,8 @@ end
 ---@param toplevel string|nil
 ---@param path string|nil optional path to update only
 ---@param callback function|nil
-function M.reload_project(toplevel, path, callback)
+---@param callback2 function|nil
+function M.reload_project(toplevel, path, callback, callback2)
   local project = M._projects_by_toplevel[toplevel]
   if not toplevel or not project or not M.config.git.enable then
     if callback then
@@ -114,10 +116,12 @@ function M.reload_project(toplevel, path, callback)
       reload_git_status(toplevel, path, project, git_status)
       callback()
     end)
-  else
+  elseif callback2 then
     -- TODO use callback once async/await is available
-    local git_status = Runner.run(opts)
-    reload_git_status(toplevel, path, project, git_status)
+    Runner.run(opts, function(output)
+      reload_git_status(toplevel, path, project, output)
+      callback2(output)
+    end)
   end
 end
 
@@ -218,7 +222,7 @@ end
 --- Only fetches project status when unknown, otherwise returns existing.
 ---@param path string absolute
 ---@return table project maybe empty
-function M.load_project_status(path)
+function M.load_project_status_origin(path)
   if not M.config.git.enable then
     return {}
   end
@@ -271,6 +275,67 @@ function M.load_project_status(path)
   else
     M._toplevels_by_path[path] = false
     return {}
+  end
+end
+--- Load the project status for a path. Does nothing when no toplevel for path.
+--- Only fetches project status when unknown, otherwise returns existing.
+---@param path string absolute
+function M.load_project_status(path, cb)
+  if not M.config.git.enable or vim.g.begin_change_dir then
+    cb {}
+    return
+  end
+
+  local toplevel = M.get_toplevel(path)
+  if not toplevel then
+    M._toplevels_by_path[path] = false
+    cb {}
+    return
+  end
+
+  local status = M._projects_by_toplevel[toplevel]
+  if status then
+    cb(status)
+    return
+  end
+
+  Runner.run({
+    toplevel = toplevel,
+    list_untracked = git_utils.should_show_untracked(toplevel),
+    list_ignored = true,
+    timeout = M.config.git.timeout,
+  }, function(output)
+    if output then
+      M._projects_by_toplevel[toplevel] = {
+        files = output,
+        dirs = git_utils.file_status_to_dir_status(output, toplevel),
+        watcher = nil,
+      }
+      cb(M._projects_by_toplevel[toplevel])
+    else
+      M._toplevels_by_path[path] = false
+      cb {}
+    end
+  end)
+
+  local watcher = nil
+  if M.config.filesystem_watchers.enable then
+    log.line("watcher", "git start")
+
+    local callback = function(w)
+      log.line("watcher", "git event scheduled '%s'", w.toplevel)
+      utils.debounce("git:watcher:" .. w.toplevel, M.config.filesystem_watchers.debounce_delay, function()
+        if w.destroyed then
+          return
+        end
+        reload_tree_at(w.toplevel)
+      end)
+    end
+
+    local git_dir = vim.env.GIT_DIR or M._git_dirs_by_toplevel[toplevel] or utils.path_join { toplevel, ".git" }
+    watcher = Watcher:new(git_dir, WATCHED_FILES, callback, {
+      toplevel = toplevel,
+    })
   end
 end
 

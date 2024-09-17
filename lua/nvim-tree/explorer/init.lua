@@ -36,10 +36,9 @@ end
 function Explorer:_load(node)
   local cwd = node.link_to or node.absolute_path
   M.explore(node, {})
-  vim.defer_fn(function()
-    local git_status = git.load_project_status(cwd)
+  git.load_project_status(cwd, function(git_status)
     M.explore(node, git_status)
-  end, 100)
+  end)
 end
 
 ---@param node Node
