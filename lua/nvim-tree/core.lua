@@ -15,7 +15,9 @@ function M.init(foldername)
   local profile = log.profile_start("core init %s", foldername)
 
   if TreeExplorer then
-    TreeExplorer:destroy()
+    vim.defer_fn(function()
+      TreeExplorer:destroy()
+    end, 100)
   end
   TreeExplorer = explorer.Explorer.new(foldername)
   if not first_init_done then
