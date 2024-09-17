@@ -70,8 +70,14 @@ end
 function Runner:_getopts(stdout_handle, stderr_handle)
   local untracked = self.list_untracked and "-u" or nil
   local ignored = (self.list_untracked and self.list_ignored) and "--ignored=matching" or "--ignored=no"
+  local args
+  if vim.g.Base_commit ~= "" then
+    args = { "diff", "--name-status", vim.g.Base_commit, "--", "." }
+  else
+    args = { "--no-optional-locks", "status", "--porcelain=v1", "-z", ignored, untracked, self.path }
+  end
   return {
-    args = { "--no-optional-locks", "status", "--porcelain=v1", "-z", ignored, untracked, self.path },
+    args = args,
     cwd = self.toplevel,
     stdio = { nil, stdout_handle, stderr_handle },
   }
@@ -149,6 +155,11 @@ function Runner:_run_git_job(callback)
       return
     end
     if data then
+      if vim.g.Base_commit ~= "" then
+        data = " " .. data
+        data = data:gsub("\t", " ")
+        data = data:gsub("\n", "\0 ")
+      end
       data = data:gsub("%z", "\n")
     end
     self:_log_raw_output(data)
