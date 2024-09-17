@@ -154,7 +154,7 @@ function M.prepare(git_status)
   }
 
   if M.config.filter_no_buffer then
-    status.bufinfo = vim.fn.getbufinfo { buflisted = 1 }
+    status.bufinfo = vim.fn.getbufinfo { bufloaded = 1 }
   end
 
   for _, node in pairs(marks.get_marks()) do
