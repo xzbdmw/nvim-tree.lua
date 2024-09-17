@@ -4,7 +4,7 @@ local view = require "nvim-tree.view"
 local finders_find_file = require "nvim-tree.actions.finders.find-file"
 
 local M = {}
-
+local last_find_name = ""
 --- Find file or buffer
 ---@param opts ApiTreeFindFileOpts|nil|boolean legacy -> opts.buf
 function M.fn(opts)
@@ -39,7 +39,11 @@ function M.fn(opts)
   else
     return
   end
-
+  if last_find_name == path then
+    return
+  else
+    last_find_name = path
+  end
   if view.is_visible() then
     -- focus
     if opts.focus then
