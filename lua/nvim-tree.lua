@@ -189,7 +189,9 @@ local function setup_autocommands(opts)
   create_nvim_tree_autocmd("BufWritePost", {
     callback = function()
       if opts.auto_reload_on_write and not opts.filesystem_watchers.enable then
-        actions.reloaders.reload_explorer()
+        vim.defer_fn(function()
+          actions.reloaders.reload_explorer()
+        end, 10)
       end
     end,
   })
