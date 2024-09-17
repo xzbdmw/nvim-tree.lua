@@ -22,7 +22,7 @@ function Runner:_parse_status_output(status, path)
     path = path:gsub("/", "\\")
   end
   if #status > 0 and #path > 0 then
-    self.output[utils.path_remove_trailing(utils.path_join { self.toplevel, path })] = status
+    self.output[utils.path_remove_trailing(utils.path_join { vim.loop.cwd(), path })] = status
   end
 end
 
@@ -78,7 +78,7 @@ function Runner:_getopts(stdout_handle, stderr_handle)
   end
   return {
     args = args,
-    cwd = self.toplevel,
+    cwd = vim.loop.cwd(),
     stdio = { nil, stdout_handle, stderr_handle },
   }
 end
@@ -132,7 +132,6 @@ function Runner:_run_git_job(callback)
   local opts = self:_getopts(stdout, stderr)
   log.line("git", "running job with timeout %dms", self.timeout)
   log.line("git", "git %s", table.concat(utils.array_remove_nils(opts.args), " "))
-
   handle, pid = vim.loop.spawn(
     "git",
     opts,
