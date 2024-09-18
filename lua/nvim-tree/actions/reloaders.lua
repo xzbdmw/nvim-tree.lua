@@ -57,6 +57,33 @@ function M.reload_explorer()
   event_running = false
 end
 
+--- @generic F: function
+--- @param f F
+--- @param ms? number
+--- @return F
+local function throttle_discard(f, ms)
+  ms = ms or 200
+  local timer = assert(vim.loop.new_timer())
+  local is_running = false
+  return function(...)
+    if is_running then
+      return
+    end
+    is_running = true
+    f(...)
+    timer:start(ms, 0, function()
+      is_running = false
+    end)
+  end
+end
+
+local throttle = throttle_discard(function(obj)
+  refresh_nodes(core.get_explorer(), obj)
+  if view.is_visible() then
+    renderer.draw()
+  end
+end)
+
 function M.reload_explorer_with_git()
   if event_running or not core.get_explorer() or vim.v.exiting ~= vim.NIL then
     return
@@ -65,16 +92,13 @@ function M.reload_explorer_with_git()
   local cwd = vim.loop.cwd()
   git.reload(function(output)
     local new_cwd = vim.loop.cwd()
-    local obj = {}
-    obj[cwd] = {
+    local status = {}
+    status[cwd] = {
       files = output,
       dirs = git_utils.file_status_to_dir_status(output, cwd),
       watcher = nil,
     }
-    refresh_nodes(core.get_explorer(), obj)
-    if view.is_visible() then
-      renderer.draw()
-    end
+    throttle(status)
     event_running = false
   end)
 end
