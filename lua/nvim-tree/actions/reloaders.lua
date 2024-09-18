@@ -55,6 +55,9 @@ function M.reload_explorer()
     renderer.draw()
   end
   event_running = false
+  vim.api.nvim_exec_autocmds("User", {
+    pattern = "NvimTreeReloaded",
+  })
 end
 
 --- @generic F: function
@@ -82,6 +85,9 @@ local throttle = throttle_discard(function(obj)
   if view.is_visible() then
     renderer.draw()
   end
+  vim.api.nvim_exec_autocmds("User", {
+    pattern = "NvimTreeReloaded",
+  })
 end)
 
 function M.reload_explorer_with_git()
