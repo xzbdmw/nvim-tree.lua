@@ -190,6 +190,9 @@ local function setup_autocommands(opts)
     callback = function(data)
       -- update opened file buffers
       vim.defer_fn(function()
+        if not vim.api.nvim_buf_is_valid(data.buf) then
+          return
+        end
         if (filters.config.filter_no_buffer or renderer.config.highlight_opened_files ~= "none") and vim.bo[data.buf].buftype == "" then
           utils.debounce("Buf:filter_buffer", opts.view.debounce_delay, function()
             actions.reloaders.reload_explorer()
