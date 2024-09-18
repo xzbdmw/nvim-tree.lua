@@ -12,6 +12,20 @@ local M = {}
 ---@param node Explorer|nil
 ---@param projects table
 local function refresh_nodes(node, projects)
+  local has_git_status_item = false
+  for _, p in pairs(projects) do
+    for f, v in pairs(p.files) do
+      if v ~= "!!" then
+        has_git_status_item = true
+        break
+      end
+    end
+  end
+  if not has_git_status_item and require("nvim-tree.explorer.filters").config.filter_git_clean then
+    vim.notify("", vim.log.levels.INFO, { title = "No Changed File" })
+    FeedKeys("S", "m")
+    return
+  end
   Iterator.builder({ node })
     :applier(function(n)
       if n.nodes then
