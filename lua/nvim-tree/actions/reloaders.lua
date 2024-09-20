@@ -23,8 +23,7 @@ local function refresh_nodes(node, projects)
   end
   if not has_git_status_item and require("nvim-tree.explorer.filters").config.filter_git_clean then
     vim.notify("", vim.log.levels.INFO, { title = "No Changed File" })
-    FeedKeys("S", "m")
-    return
+    require("nvim-tree.explorer.filters").config.filter_git_clean = false
   end
   Iterator.builder({ node })
     :applier(function(n)
