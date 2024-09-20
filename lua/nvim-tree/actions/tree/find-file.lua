@@ -43,6 +43,31 @@ function M.fn(opts)
   if cursor_abs_path == path then
     return
   end
+
+  -- if require("nvim-tree.explorer.filters").config.filter_git_clean then
+  --   local pass = false
+  --   local projects = require("nvim-tree.git").get_project(vim.loop.cwd()) or {}
+  --   -- __AUTO_GENERATED_PRINT_VAR_START__
+  --   print([==[M.fn#if projects:]==], vim.inspect(projects)) -- __AUTO_GENERATED_PRINT_VAR_END__
+  --   if projects.dirs ~= nil then
+  --     for f, v in pairs(projects.files) do
+  --       -- __AUTO_GENERATED_PRINT_VAR_START__
+  --       print([==[M.fn#if#if#for f:]==], vim.inspect(f)) -- __AUTO_GENERATED_PRINT_VAR_END__
+  --       -- __AUTO_GENERATED_PRINT_VAR_START__
+  --       print([==[M.fn#if#if#for#if path:]==], vim.inspect(path)) -- __AUTO_GENERATED_PRINT_VAR_END__
+  --       if path == f then
+  --         pass = true
+  --         break
+  --       end
+  --     end
+  --   end
+  --   -- __AUTO_GENERATED_PRINT_VAR_START__
+  --   print([==[M.fn#if#if pass:]==], vim.inspect(pass)) -- __AUTO_GENERATED_PRINT_VAR_END__
+  --   if not pass then
+  --     return
+  --   end
+  -- end
+
   if view.is_visible() then
     -- focus
     if opts.focus then
