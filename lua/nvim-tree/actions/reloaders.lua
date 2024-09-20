@@ -61,22 +61,6 @@ function M.reload_node_status(parent_node, projects)
 end
 
 local event_running = false
-function M.reload_explorer()
-  if event_running or not core.get_explorer() or vim.v.exiting ~= vim.NIL then
-    return
-  end
-  event_running = true
-
-  local projects = git.reload()
-  refresh_nodes(core.get_explorer(), projects)
-  if view.is_visible() then
-    renderer.draw()
-  end
-  event_running = false
-  vim.api.nvim_exec_autocmds("User", {
-    pattern = "NvimTreeReloaded",
-  })
-end
 
 --- @generic F: function
 --- @param f F
@@ -98,7 +82,7 @@ local function throttle_discard(f, ms)
   end
 end
 
-local throttle = throttle_discard(function(obj)
+local throttle = throttle_discard(function(obj, callback)
   refresh_nodes(core.get_explorer(), obj)
   if view.is_visible() then
     renderer.draw()
@@ -106,9 +90,12 @@ local throttle = throttle_discard(function(obj)
   vim.api.nvim_exec_autocmds("User", {
     pattern = "NvimTreeReloaded",
   })
+  if callback ~= nil then
+    callback()
+  end
 end)
 
-function M.reload_explorer_with_git()
+function M.reload_explorer(callback)
   if event_running or not core.get_explorer() or vim.v.exiting ~= vim.NIL then
     return
   end
@@ -122,7 +109,7 @@ function M.reload_explorer_with_git()
       dirs = git_utils.file_status_to_dir_status(output, cwd),
       watcher = nil,
     }
-    throttle(status)
+    throttle(status, callback)
     event_running = false
   end)
 end
