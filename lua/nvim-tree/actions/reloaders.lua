@@ -33,7 +33,12 @@ local function refresh_nodes(node, projects)
       end
     end)
     :recursor(function(n)
-      return n.group_next and { n.group_next } or (n.open and n.nodes)
+      -- expand all git dirty dirs
+      if require("nvim-tree.explorer.filters").config.filter_git_clean then
+        return n.group_next and { n.group_next } or n.nodes
+      else
+        return n.group_next and { n.group_next } or (n.open and n.nodes)
+      end
     end)
     :iterate()
 end
