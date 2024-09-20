@@ -90,6 +90,27 @@ function M.get_arrows(node)
   local hl = "NvimTreeFolderArrowClosed"
 
   if node.nodes then
+    local pass = false
+    if require("nvim-tree.explorer.filters").config.filter_git_clean then
+      local projects = require("nvim-tree.git").get_project(vim.loop.cwd()) or {}
+      if projects.dirs ~= nil then
+        for f, v in pairs(projects.dirs.direct) do
+          if node.absolute_path == f then
+            pass = true
+            break
+          end
+        end
+        for f, v in pairs(projects.dirs.indirect) do
+          if node.absolute_path == f then
+            pass = true
+            break
+          end
+        end
+      end
+    end
+    if pass then
+      node.open = true
+    end
     if node.open then
       str = M.config.icons.glyphs.folder["arrow_open"] .. " "
       hl = "NvimTreeFolderArrowOpen"

@@ -282,7 +282,7 @@ end
 --- Only fetches project status when unknown, otherwise returns existing.
 ---@param path string absolute
 function M.load_project_status(path, cb)
-  if not M.config.git.enable or vim.g.begin_change_dir then
+  if not M.config.git.enable then
     cb {}
     return
   end

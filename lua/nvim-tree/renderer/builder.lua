@@ -366,28 +366,7 @@ function Builder:build_line(node, idx, num_children)
 
   node = require("nvim-tree.lib").get_last_group_node(node)
 
-  local pass = false
-  if require("nvim-tree.explorer.filters").config.filter_git_clean then
-    local projects = require("nvim-tree.git").get_project(vim.loop.cwd()) or {}
-    if projects.dirs ~= nil then
-      for f, v in pairs(projects.dirs.direct) do
-        if node.absolute_path == f then
-          pass = true
-          break
-        end
-      end
-      for f, v in pairs(projects.dirs.indirect) do
-        if node.absolute_path == f then
-          pass = true
-          break
-        end
-      end
-    end
-  end
-  if pass then
-    node.open = true
-  end
-  if node.open or pass then
+  if node.open then
     self.depth = self.depth + 1
     self:build_lines(node)
     self.depth = self.depth - 1
