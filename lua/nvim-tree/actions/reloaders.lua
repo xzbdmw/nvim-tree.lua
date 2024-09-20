@@ -61,7 +61,7 @@ function M.reload_node_status(parent_node, projects)
 end
 
 local event_running = false
-
+local last_obj = nil
 --- @generic F: function
 --- @param f F
 --- @param ms? number
@@ -82,7 +82,12 @@ local function throttle_discard(f, ms)
   end
 end
 
-local throttle = throttle_discard(function(obj, callback)
+local throttle = function(obj, callback)
+  if last_obj == nil then
+    last_obj = obj
+  elseif last_obj == obj then
+    return
+  end
   refresh_nodes(core.get_explorer(), obj)
   if view.is_visible() then
     renderer.draw()
@@ -93,7 +98,7 @@ local throttle = throttle_discard(function(obj, callback)
   if callback ~= nil then
     callback()
   end
-end)
+end
 
 function M.reload_explorer(callback)
   if event_running or not core.get_explorer() or vim.v.exiting ~= vim.NIL then
