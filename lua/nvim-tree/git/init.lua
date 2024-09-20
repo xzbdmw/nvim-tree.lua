@@ -116,7 +116,8 @@ function M.reload_project(toplevel, path, callback, callback2)
       reload_git_status(toplevel, path, project, git_status)
       callback()
     end)
-  elseif callback2 then
+  end
+  if callback2 then
     -- TODO use callback once async/await is available
     Runner.run(opts, function(output)
       reload_git_status(toplevel, path, project, output)

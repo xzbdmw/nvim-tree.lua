@@ -7,8 +7,12 @@ local M = {}
 
 local function reload()
   local node = lib.get_node_at_cursor()
-  reloaders.reload_explorer()
-  utils.focus_node_or_parent(node)
+  reloaders.reload_explorer(function()
+    utils.focus_node_or_parent(node)
+    vim.api.nvim_exec_autocmds("User", {
+      pattern = "NvimTreeToggled",
+    })
+  end)
 end
 
 function M.custom()
