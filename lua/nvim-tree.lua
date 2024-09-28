@@ -198,7 +198,7 @@ local function setup_autocommands(opts)
             actions.reloaders.reload_explorer()
           end)
         end
-      end, 100)
+      end, 10)
     end,
   })
 
@@ -257,6 +257,7 @@ local function setup_autocommands(opts)
         if type(exclude) == "function" and exclude(event) then
           return
         end
+
         local start = vim.uv.hrtime()
         local function follow_node()
           local duration = 0.000001 * (vim.loop.hrtime() - start)
@@ -270,7 +271,16 @@ local function setup_autocommands(opts)
             vim.defer_fn(follow_node, 1)
           end
         end
-        follow_node()
+        local parser_installed = require("nvim-treesitter.parsers").has_parser(vim.bo[event.buf].filetype)
+
+        if parser_installed then
+          follow_node()
+        else
+          vim.defer_fn(function()
+            actions.tree.find_file.fn()
+            last_visited = event.buf
+          end, 20)
+        end
       end,
     })
   end
@@ -475,7 +485,7 @@ local DEFAULT_OPTS = { -- BEGIN_DEFAULT_OPTS
           staged = "✓",
           unmerged = "",
           renamed = "➜",
-          untracked = "★",
+          untracked = "z",
           deleted = "",
           ignored = "◌",
         },
