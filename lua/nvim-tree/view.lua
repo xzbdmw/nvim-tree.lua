@@ -434,6 +434,13 @@ end
 function M.set_cursor(opts)
   if M.is_visible() then
     pcall(vim.api.nvim_win_set_cursor, M.get_winnr(), opts)
+    if opts ~= nil and vim.api.nvim_get_current_win() ~= M.get_winnr() then
+      if opts[1] <= 34 then
+        vim.api.nvim_win_call(M.get_winnr(), function()
+          vim.fn.winrestview { topline = 1 }
+        end)
+      end
+    end
   end
 end
 
