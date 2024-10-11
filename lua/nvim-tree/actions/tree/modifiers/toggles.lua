@@ -28,6 +28,9 @@ end
 function M.git_clean()
   filters.config.filter_git_clean = not filters.config.filter_git_clean
   if filters.config.filter_git_clean == true then
+    if vim.g.Diff_file_count == 0 then
+      return
+    end
     local node = lib.get_node_at_cursor()
     reloaders.reload_explorer(function()
       utils.focus_node_or_parent(node)
