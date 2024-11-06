@@ -76,7 +76,11 @@ function M.reload(callback)
   end
 
   for toplevel in pairs(M._projects_by_toplevel) do
-    M.reload_project(toplevel, nil, nil, callback)
+    if toplevel == vim.loop.cwd() then
+      M.reload_project(toplevel, nil, nil, callback)
+    else
+      M._projects_by_toplevel[toplevel] = nil
+    end
   end
 
   return M._projects_by_toplevel
@@ -88,6 +92,9 @@ end
 ---@param callback function|nil
 ---@param callback2 function|nil
 function M.reload_project(toplevel, path, callback, callback2)
+  if toplevel ~= vim.loop.cwd() then
+    return
+  end
   local project = M._projects_by_toplevel[toplevel]
   if not toplevel or not project or not M.config.git.enable then
     if callback then
