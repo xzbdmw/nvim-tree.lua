@@ -37,7 +37,7 @@ function M.git_clean()
       require("nvim-tree.api").tree.expand_all()
     end)
   else
-    reload(true)
+    reload()
   end
 end
 

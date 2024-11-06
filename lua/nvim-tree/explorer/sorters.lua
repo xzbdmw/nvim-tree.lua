@@ -105,11 +105,12 @@ function M.sort(t)
     for _, n in ipairs(t) do
       table.insert(t_user, {
         absolute_path = n.absolute_path,
+        fs_state = n.fs_stat,
         executable = n.executable,
         extension = n.extension,
-        filetype = vim.filetype.match { filename = n.name },
         link_to = n.link_to,
         name = n.name,
+        nodes = n.nodes,
         type = n.type,
       })
       table.insert(origin_index, n)
