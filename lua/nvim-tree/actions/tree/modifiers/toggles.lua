@@ -34,7 +34,6 @@ function M.git_clean()
       vim.api.nvim_exec_autocmds("User", {
         pattern = "NvimTreeToggled",
       })
-      require("nvim-tree.api").tree.expand_all()
     end)
   else
     reload()

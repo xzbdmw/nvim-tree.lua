@@ -60,7 +60,7 @@ function M.reload_node_status(parent_node, projects)
   end
 end
 
-local event_running = false
+_G.event_running = false
 local last_obj = nil
 --- @generic F: function
 --- @param f F
@@ -101,10 +101,10 @@ local throttle = function(obj, callback)
 end
 
 function M.reload_explorer(callback)
-  if event_running or not core.get_explorer() or vim.v.exiting ~= vim.NIL then
+  if _G.event_running or not core.get_explorer() or vim.v.exiting ~= vim.NIL then
     return
   end
-  event_running = true
+  _G.event_running = true
   local cwd = vim.loop.cwd()
   git.reload(function(output)
     local new_cwd = vim.loop.cwd()
@@ -115,20 +115,20 @@ function M.reload_explorer(callback)
       watcher = nil,
     }
     throttle(status, callback)
-    event_running = false
+    _G.event_running = false
   end)
 end
 
 function M.reload_git()
-  if not core.get_explorer() or not git.config.git.enable or event_running then
+  if not core.get_explorer() or not git.config.git.enable or _G.event_running then
     return
   end
-  event_running = true
+  _G.event_running = true
 
   local projects = git.reload()
   M.reload_node_status(core.get_explorer(), projects)
   renderer.draw()
-  event_running = false
+  _G.event_running = false
 end
 
 return M
