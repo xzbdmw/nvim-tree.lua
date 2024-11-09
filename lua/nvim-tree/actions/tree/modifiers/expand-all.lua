@@ -65,7 +65,7 @@ end
 
 ---@param base_node table
 function M.fn(base_node)
-  local node = base_node.nodes and base_node or core.get_explorer()
+  local node = core.get_explorer()
   if gen_iterator()(node) then
     notify.warn("expansion iteration was halted after " .. M.MAX_FOLDER_DISCOVERY .. " discovered folders")
   end
