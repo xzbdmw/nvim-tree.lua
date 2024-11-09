@@ -33,12 +33,7 @@ local function refresh_nodes(node, projects)
       end
     end)
     :recursor(function(n)
-      -- expand all git dirty dirs
-      if require("nvim-tree.explorer.filters").config.filter_git_clean then
-        return n.group_next and { n.group_next } or n.nodes
-      else
-        return n.group_next and { n.group_next } or (n.open and n.nodes)
-      end
+      return n.group_next and { n.group_next } or (n.open and n.nodes)
     end)
     :iterate()
 end
@@ -61,7 +56,6 @@ function M.reload_node_status(parent_node, projects)
 end
 
 _G.event_running = false
-local last_obj = nil
 --- @generic F: function
 --- @param f F
 --- @param ms? number
@@ -83,21 +77,16 @@ local function throttle_discard(f, ms)
 end
 
 local throttle = function(obj, callback)
-  if last_obj == nil then
-    last_obj = obj
-  elseif last_obj == obj then
-    return
-  end
   refresh_nodes(core.get_explorer(), obj)
   if view.is_visible() then
     renderer.draw()
   end
-  vim.api.nvim_exec_autocmds("User", {
-    pattern = "NvimTreeReloaded",
-  })
   if callback ~= nil then
     callback()
   end
+  vim.api.nvim_exec_autocmds("User", {
+    pattern = "NvimTreeReloaded",
+  })
 end
 
 function M.reload_explorer(callback)

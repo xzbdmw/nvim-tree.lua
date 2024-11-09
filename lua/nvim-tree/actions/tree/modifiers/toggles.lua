@@ -9,9 +9,6 @@ local function reload()
   local node = lib.get_node_at_cursor()
   reloaders.reload_explorer(function()
     utils.focus_node_or_parent(node)
-    vim.api.nvim_exec_autocmds("User", {
-      pattern = "NvimTreeToggled",
-    })
   end)
 end
 
@@ -27,17 +24,7 @@ end
 
 function M.git_clean()
   filters.config.filter_git_clean = not filters.config.filter_git_clean
-  if filters.config.filter_git_clean == true then
-    local node = lib.get_node_at_cursor()
-    reloaders.reload_explorer(function()
-      utils.focus_node_or_parent(node)
-      vim.api.nvim_exec_autocmds("User", {
-        pattern = "NvimTreeToggled",
-      })
-    end)
-  else
-    reload()
-  end
+  reload()
 end
 
 function M.no_buffer()
