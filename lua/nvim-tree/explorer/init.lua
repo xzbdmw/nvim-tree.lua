@@ -35,7 +35,7 @@ end
 ---@param node Node
 function Explorer:_load(node)
   local cwd = node.link_to or node.absolute_path
-  M.explore(node, {})
+  -- M.explore(node, {})
   git.load_project_status(cwd, function(git_status)
     M.explore(node, git_status)
   end)
