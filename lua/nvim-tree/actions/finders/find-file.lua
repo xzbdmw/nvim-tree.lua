@@ -76,6 +76,7 @@ function M.fn(path)
     :iterate()
 
   if found and view.is_visible() then
+    vim.g.found = true
     renderer.draw()
     view.set_cursor { line, 0 }
   end
