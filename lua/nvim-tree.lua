@@ -188,6 +188,9 @@ local function setup_autocommands(opts)
 
   create_nvim_tree_autocmd("BufReadPost", {
     callback = function(data)
+      if vim.g.load_session then
+        return
+      end
       -- update opened file buffers
       vim.defer_fn(function()
         if not vim.api.nvim_buf_is_valid(data.buf) then

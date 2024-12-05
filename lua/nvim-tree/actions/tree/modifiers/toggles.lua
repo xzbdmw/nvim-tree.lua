@@ -24,6 +24,9 @@ local function set_cursor_first_dirty_file()
     end
     ::continue::
   end
+  if first_file_index == nil then
+    return
+  end
   vim.api.nvim_win_set_cursor(winid, { first_file_index, 0 })
   vim.g.found = false
   require("nvim-tree.api").tree.find_file()
