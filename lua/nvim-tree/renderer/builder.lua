@@ -224,22 +224,6 @@ function Builder:format_line(indent_markers, arrows, icon, name, node)
     end
   end
 
-  local arrow_index = 1
-  local arrow_filenames = vim.g.arrow_filenames
-  if arrow_filenames then
-    for i, filename in ipairs(arrow_filenames) do
-      if string.sub(node.absolute_path, -#filename) == filename then
-        local statusline = require "arrow.statusline"
-        arrow_index = statusline.text_for_statusline(_, i)
-        -- line[1].str = string.sub(line[1].str, 1, -3)
-        line[1].str = line[1].str:sub(1, line[1].str:len() - 4)
-        line[2].str = arrow_index .. " "
-        line[2].hl = { "NvimTreeFolderArrowClosed" }
-        break
-      end
-    end
-  end
-
   add_to_end(line, { icon })
 
   for i = #M.decorators, 1, -1 do
@@ -247,6 +231,19 @@ function Builder:format_line(indent_markers, arrows, icon, name, node)
   end
 
   add_to_end(line, { name })
+
+  local arrow_index = 1
+  local arrow_filenames = vim.g.arrow_filenames
+  if arrow_filenames then
+    for i, filename in ipairs(arrow_filenames) do
+      if string.sub(node.absolute_path, -#filename) == filename then
+        local statusline = require "arrow.statusline"
+        arrow_index = statusline.text_for_statusline(nil, i)
+        add_to_end(line, { { hl = { "Comment" }, str = arrow_index } })
+        break
+      end
+    end
+  end
 
   for i = #M.decorators, 1, -1 do
     add_to_end(line, M.decorators[i]:icons_after(node))
