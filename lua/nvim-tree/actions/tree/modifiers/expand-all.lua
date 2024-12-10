@@ -19,6 +19,7 @@ end
 
 ---@param node Node
 local function expand(node)
+  node.open = true
   node = lib.get_last_group_node(node)
   node.open = true
   if #node.nodes == 0 then
