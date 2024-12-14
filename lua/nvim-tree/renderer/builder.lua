@@ -245,7 +245,7 @@ function Builder:format_line(indent_markers, arrows, icon, name, node)
     end
   end
 
-  if vim.g.nvim_tree_size and node.line_count ~= nil then
+  if vim.g.show_nvim_tree_size and node.line_count ~= nil then
     add_to_end(line, { { hl = { "NvimTreeLineCount" }, str = tostring(node.line_count) } })
   end
 

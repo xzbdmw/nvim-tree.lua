@@ -9,6 +9,57 @@ local Iterator = require "nvim-tree.iterators.node-iterator"
 
 local M = {}
 
+-- ... (previous code)
+
+-- Instead of running 'wc -l' here, we:
+-- 1. Define a function that returns the count file path based on cwd.
+-- 2. Check if the file exists.
+-- 3. If not, generate it by invoking the external shell command once.
+-- 4. Parse the file line-by-line to get counts.
+-- 5. Assign counts to the nodes.
+
+local function get_count_file_path()
+  local cwd = vim.uv.cwd()
+  -- Transform the absolute path into a filename by replacing `/` with `_`
+  local safe_cwd = cwd:gsub("/", "_")
+  local count_file = "/Users/xzb/.config/nvim/.count/" .. safe_cwd .. ".txt"
+  return count_file
+end
+
+local function file_exists(path)
+  local stat = vim.loop.fs_stat(path)
+  return stat and stat.type == "file"
+end
+
+local function generate_line_count_file(cwd, files)
+  -- Build the shell command equivalent to what was previously discussed.
+  -- Using fd + xargs might not be ideal here since we already have `files_to_count`.
+  -- Instead, just replicate logic: run wc -l on all files and store the output.
+  -- For simplicity, we rely on 'sh' and 'printf' to handle arguments safely.
+  -- Note: Ensure that you have 'sh', 'wc' available.
+  local cmd = { "sh", "/Users/xzb/.config/nvim/tree.sh" }
+  vim.system(cmd, nil, function(out)
+    vim.cmd "NvimTreeRefresh"
+  end)
+end
+
+local function load_line_counts(count_file)
+  local path_to_count = {}
+  local f = io.open(count_file, "r")
+  if f then
+    for line in f:lines() do
+      if not line:find " total" then
+        local count, path = line:match "^%s*(%d+)%s+(.*)$"
+        if count and path then
+          path_to_count[path] = tonumber(count)
+        end
+      end
+    end
+    f:close()
+  end
+  return path_to_count
+end
+
 ---@param node Explorer|nil
 ---@param projects table
 local function refresh_nodes(node, projects)
@@ -25,49 +76,61 @@ local function refresh_nodes(node, projects)
     vim.notify("", vim.log.levels.INFO, { title = "No Changed File" })
     require("nvim-tree.explorer.filters").config.filter_git_clean = false
   end
+  local path_to_count = {}
+  if vim.g.show_nvim_tree_size then
+    local count_file = get_count_file_path()
+    if not file_exists(count_file) then
+      local cmd = { "sh", "/Users/xzb/.config/nvim/tree.sh" }
+      vim.defer_fn(function()
+        vim.system(cmd, nil, function() end)
+      end, 200)
+    else
+      path_to_count = load_line_counts(count_file)
+    end
+  end
   Iterator.builder({ node })
     :applier(function(n)
       if n.nodes then
         local toplevel = git.get_toplevel(n.cwd or n.link_to or n.absolute_path)
-        explorer_module.reload(n, projects[toplevel] or {})
+        explorer_module.reload(n, projects[toplevel] or {}, path_to_count)
       end
     end)
     :recursor(function(n)
-      if vim.g.nvim_tree_size then
+      if vim.g.show_nvim_tree_size then
         return n.group_next and { n.group_next } or n.nodes
       else
         return n.group_next and { n.group_next } or (n.open and n.nodes)
       end
     end)
     :iterate()
-  if vim.g.nvim_tree_size and vim.g.nvim_tree_size_computed == false then
-    vim.g.nvim_tree_size_computed = true
-    local top_node = node
-    local function sum_line_counts(node)
-      if node ~= top_node and node.type ~= "directory" then
-        return node.line_count or 0
-      end
 
-      -- If it's a directory, recursively sum all children
-      local total = 0
-      for _, child in ipairs(node.nodes) do
-        total = total + sum_line_counts(child)
-      end
-      node.line_count = total
-      return total
+  local top_node = node
+  local function sum_line_counts(node)
+    if node ~= top_node and node.type ~= "directory" then
+      return node.line_count or 0
     end
-    sum_line_counts(node)
+
+    -- If it's a directory, recursively sum all children
+    local total = 0
+    for _, child in ipairs(node.nodes) do
+      total = total + sum_line_counts(child)
+    end
+    node.line_count = total
+    return total
   end
-  Iterator.builder({ node })
-    :applier(function(n)
-      if n.nodes then
-        require("nvim-tree.explorer.sorters").sort(n.nodes)
-      end
-    end)
-    :recursor(function(n)
-      return n.group_next and { n.group_next } or n.nodes
-    end)
-    :iterate()
+  if vim.g.show_nvim_tree_size then
+    sum_line_counts(node)
+    Iterator.builder({ node })
+      :applier(function(n)
+        if n.nodes then
+          require("nvim-tree.explorer.sorters").sort(n.nodes)
+        end
+      end)
+      :recursor(function(n)
+        return n.group_next and { n.group_next } or n.nodes
+      end)
+      :iterate()
+  end
 end
 
 ---@param parent_node Node|nil

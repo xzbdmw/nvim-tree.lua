@@ -153,6 +153,7 @@ function M.change_dir(name)
     actions.tree.find_file.fn()
   end
 end
+local last_cwd = vim.loop.cwd()
 local last_visited = 0
 ---@param opts table
 local function setup_autocommands(opts)
@@ -204,16 +205,20 @@ local function setup_autocommands(opts)
       end, 10)
     end,
   })
-
   create_nvim_tree_autocmd("BufUnload", {
     callback = function(data)
-      -- update opened file buffers
-      if (filters.config.filter_no_buffer or renderer.config.highlight_opened_files ~= "none") and vim.bo[data.buf].buftype == "" then
-        vim.defer_fn(function()
-          utils.debounce("Buf:filter_buffer", opts.view.debounce_delay, function()
-            actions.reloaders.reload_explorer()
-          end)
-        end, 100)
+      if last_cwd == vim.loop.cwd() then
+        -- update opened file buffers
+        if (filters.config.filter_no_buffer or renderer.config.highlight_opened_files ~= "none") and vim.bo[data.buf].buftype == "" then
+          vim.defer_fn(function()
+            utils.debounce("Buf:filter_buffer", opts.view.debounce_delay, function()
+              actions.reloaders.reload_explorer()
+            end)
+          end, 100)
+        end
+      else
+        last_cwd = vim.loop.cwd()
+        return
       end
     end,
   })

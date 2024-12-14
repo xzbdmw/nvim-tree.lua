@@ -69,7 +69,7 @@ end
 
 ---@param node Node
 ---@param git_status table
-function M.reload(node, git_status)
+function M.reload(node, git_status, path_to_count)
   local cwd = node.link_to or node.absolute_path
   local handle = vim.loop.fs_scandir(cwd)
   if not handle then
@@ -90,7 +90,7 @@ function M.reload(node, git_status)
   local node_ignored = explorer_node.is_git_ignored(node)
   local nodes_by_path = utils.key_by(node.nodes, "absolute_path")
 
-  -- We'll store file paths and later run 'wc -l' on them all at once
+  -- We'll store file paths and later look up line counts from a precomputed file
   local files_to_count = {}
 
   while true do
@@ -167,24 +167,9 @@ function M.reload(node, git_status)
     end, node.nodes)
   )
 
-  -- Run wc -l once for all files
-  if #files_to_count > 0 and vim.g.nvim_tree_size and not vim.g.nvim_tree_size_computed then
-    -- Escape and join all filenames for wc -l command
-    local cmd = { "wc", "-l" }
-    for _, f in ipairs(files_to_count) do
-      table.insert(cmd, f)
-    end
-
-    local system_cmd = table.concat(cmd, " ")
-    local output = vim.fn.system(system_cmd)
-    -- Output looks like:
-    --  <lines> <filename>
-    --  ...
-    --  <total> total
-    -- We need to parse each line except the last "total"
-    local lines = vim.split(output, "\n", { trimempty = true })
-
-    -- We'll create a lookup to quickly find nodes by their absolute path
+  -- Instead of calling wc -l here each time, use the cached counts:
+  if path_to_count ~= nil and #files_to_count > 0 then
+    -- Map nodes by absolute path for quick lookup
     local path_to_node = {}
     for _, n in ipairs(node.nodes) do
       if n.type == "file" then
@@ -192,16 +177,10 @@ function M.reload(node, git_status)
       end
     end
 
-    for _, line in ipairs(lines) do
-      if not line:find " total" then
-        local count, path = line:match "^%s*(%d+)%s+(.*)$"
-        if count and path then
-          count = tonumber(count)
-          local n = path_to_node[path]
-          if n then
-            n.line_count = count
-          end
-        end
+    for p, c in pairs(path_to_count) do
+      local n = path_to_node[p]
+      if n then
+        n.line_count = c
       end
     end
   end
