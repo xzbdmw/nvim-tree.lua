@@ -112,6 +112,7 @@ function M.sort(t)
         name = n.name,
         nodes = n.nodes,
         type = n.type,
+        size = n.line_count,
       })
       table.insert(origin_index, n)
     end

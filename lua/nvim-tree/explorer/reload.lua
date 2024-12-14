@@ -89,6 +89,10 @@ function M.reload(node, git_status)
 
   local node_ignored = explorer_node.is_git_ignored(node)
   local nodes_by_path = utils.key_by(node.nodes, "absolute_path")
+
+  -- We'll store file paths and later run 'wc -l' on them all at once
+  local files_to_count = {}
+
   while true do
     local name, t = vim.loop.fs_scandir_next(handle, cwd)
     if not name then
@@ -107,6 +111,10 @@ function M.reload(node, git_status)
 
     local abs = utils.path_join { cwd, name }
     t = t or (fs_stat_cached(abs) or {}).type
+    if t == "file" then
+      -- Collect file path for later 'wc -l' batch processing
+      table.insert(files_to_count, abs)
+    end
     if not filters.should_filter(abs, filter_status) then
       child_names[abs] = true
 
@@ -159,6 +167,45 @@ function M.reload(node, git_status)
     end, node.nodes)
   )
 
+  -- Run wc -l once for all files
+  if #files_to_count > 0 and vim.g.nvim_tree_size and not vim.g.nvim_tree_size_computed then
+    -- Escape and join all filenames for wc -l command
+    local cmd = { "wc", "-l" }
+    for _, f in ipairs(files_to_count) do
+      table.insert(cmd, f)
+    end
+
+    local system_cmd = table.concat(cmd, " ")
+    local output = vim.fn.system(system_cmd)
+    -- Output looks like:
+    --  <lines> <filename>
+    --  ...
+    --  <total> total
+    -- We need to parse each line except the last "total"
+    local lines = vim.split(output, "\n", { trimempty = true })
+
+    -- We'll create a lookup to quickly find nodes by their absolute path
+    local path_to_node = {}
+    for _, n in ipairs(node.nodes) do
+      if n.type == "file" then
+        path_to_node[n.absolute_path] = n
+      end
+    end
+
+    for _, line in ipairs(lines) do
+      if not line:find " total" then
+        local count, path = line:match "^%s*(%d+)%s+(.*)$"
+        if count and path then
+          count = tonumber(count)
+          local n = path_to_node[path]
+          if n then
+            n.line_count = count
+          end
+        end
+      end
+    end
+  end
+
   local is_root = not node.parent
   local child_folder_only = explorer_node.has_one_child_folder(node) and node.nodes[1]
   if M.config.group_empty and not is_root and child_folder_only then
@@ -171,6 +218,7 @@ function M.reload(node, git_status)
 
   sorters.sort(node.nodes)
   live_filter.apply_filter(node)
+  -- Recursively sum line counts for directories
   log.profile_end(profile)
   return node.nodes
 end

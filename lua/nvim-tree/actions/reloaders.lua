@@ -33,7 +33,39 @@ local function refresh_nodes(node, projects)
       end
     end)
     :recursor(function(n)
-      return n.group_next and { n.group_next } or (n.open and n.nodes)
+      if vim.g.nvim_tree_size then
+        return n.group_next and { n.group_next } or n.nodes
+      else
+        return n.group_next and { n.group_next } or (n.open and n.nodes)
+      end
+    end)
+    :iterate()
+  if vim.g.nvim_tree_size and vim.g.nvim_tree_size_computed == false then
+    vim.g.nvim_tree_size_computed = true
+    local top_node = node
+    local function sum_line_counts(node)
+      if node ~= top_node and node.type ~= "directory" then
+        return node.line_count or 0
+      end
+
+      -- If it's a directory, recursively sum all children
+      local total = 0
+      for _, child in ipairs(node.nodes) do
+        total = total + sum_line_counts(child)
+      end
+      node.line_count = total
+      return total
+    end
+    sum_line_counts(node)
+  end
+  Iterator.builder({ node })
+    :applier(function(n)
+      if n.nodes then
+        require("nvim-tree.explorer.sorters").sort(n.nodes)
+      end
+    end)
+    :recursor(function(n)
+      return n.group_next and { n.group_next } or n.nodes
     end)
     :iterate()
 end

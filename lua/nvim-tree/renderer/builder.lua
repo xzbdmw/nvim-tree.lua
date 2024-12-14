@@ -245,6 +245,10 @@ function Builder:format_line(indent_markers, arrows, icon, name, node)
     end
   end
 
+  if vim.g.nvim_tree_size and node.line_count ~= nil then
+    add_to_end(line, { { hl = { "NvimTreeLineCount" }, str = tostring(node.line_count) } })
+  end
+
   for i = #M.decorators, 1, -1 do
     add_to_end(line, M.decorators[i]:icons_after(node))
   end
