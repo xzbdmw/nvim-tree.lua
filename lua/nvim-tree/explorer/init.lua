@@ -31,11 +31,15 @@ function Explorer.new(cwd)
   return explorer
 end
 
+_G.nvimtreei = 0
 ---@private
 ---@param node Node
 function Explorer:_load(node)
   local cwd = node.link_to or node.absolute_path
-  -- M.explore(node, {})
+  if _G.nvimtreei == 0 then
+    M.explore(node, {})
+    _G.nvimtreei = _G.nvimtreei + 1
+  end
   git.load_project_status(cwd, function(git_status)
     M.explore(node, git_status)
   end)

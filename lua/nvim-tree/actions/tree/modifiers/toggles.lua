@@ -7,7 +7,7 @@ local M = {}
 
 local function set_cursor_first_dirty_file()
   local winid = require("nvim-tree.api").tree.winid()
-  if not vim.api.nvim_win_is_valid(winid) then
+  if winid == nil or not vim.api.nvim_win_is_valid(winid) then
     return
   end
   local cur_row = vim.api.nvim_win_get_cursor(winid)[1]

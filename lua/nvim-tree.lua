@@ -249,6 +249,7 @@ local function setup_autocommands(opts)
     create_nvim_tree_autocmd("DirChanged", {
       callback = function()
         vim.api.nvim_exec_autocmds("User", { pattern = "NvimTreeChangeDir" })
+        _G.nvimtreei = 0
         M.change_dir(vim.loop.cwd())
       end,
     })
