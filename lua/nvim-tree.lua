@@ -278,13 +278,15 @@ local function setup_autocommands(opts)
             actions.tree.find_file.fn()
             last_visited = event.buf
           else
-            vim.defer_fn(follow_node, 1)
+            vim.defer_fn(follow_node, 5)
           end
         end
         local parser_installed = require("nvim-treesitter.parsers").has_parser(vim.bo[event.buf].filetype)
 
         if parser_installed then
-          follow_node()
+          vim.schedule(function()
+            follow_node()
+          end)
         else
           vim.defer_fn(function()
             actions.tree.find_file.fn()
