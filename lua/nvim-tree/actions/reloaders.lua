@@ -60,6 +60,7 @@ local function load_line_counts(count_file)
   return path_to_count
 end
 
+local cache_count = {}
 ---@param node Explorer|nil
 ---@param projects table
 local function refresh_nodes(node, projects)
@@ -97,7 +98,7 @@ local function refresh_nodes(node, projects)
     end)
     :recursor(function(n)
       if vim.g.show_nvim_tree_size then
-        return n.group_next and { n.group_next } or n.nodes
+        return n.group_next and { n.group_next } or (n.line_count == nil and n.nodes)
       else
         return n.group_next and { n.group_next } or (n.open and n.nodes)
       end
@@ -118,7 +119,9 @@ local function refresh_nodes(node, projects)
     node.line_count = total
     return total
   end
-  if vim.g.show_nvim_tree_size then
+
+  -- only scan once
+  if vim.g.show_nvim_tree_size and not cache_count[vim.uv.cwd()] then
     sum_line_counts(node)
     Iterator.builder({ node })
       :applier(function(n)
@@ -130,6 +133,7 @@ local function refresh_nodes(node, projects)
         return n.group_next and { n.group_next } or n.nodes
       end)
       :iterate()
+    cache_count[vim.uv.cwd()] = true
   end
 end
 
