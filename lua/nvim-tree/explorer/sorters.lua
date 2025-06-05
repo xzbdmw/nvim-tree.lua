@@ -98,7 +98,7 @@ end
 ---Perform a merge sort using sorter option.
 ---@param t table nodes
 function M.sort(t)
-  if C.user then
+  if C.user and vim.g.show_nvim_tree_size then
     local t_user = {}
     local origin_index = {}
 

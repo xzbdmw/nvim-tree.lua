@@ -27,6 +27,9 @@ end
 ---@param node Node
 ---@return string|nil group
 function DecoratorOpened:calculate_highlight(node)
+  if node.name:find "_test" ~= nil then
+    return "TelescopePromptCounter"
+  end
   if self.hl_pos ~= HL_POSITION.none and buffers.is_opened(node) then
     return "NvimTreeOpenedHL"
   end

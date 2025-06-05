@@ -268,30 +268,13 @@ local function setup_autocommands(opts)
           return
         end
 
-        local start = vim.uv.hrtime()
-        local function follow_node()
-          local duration = 0.000001 * (vim.loop.hrtime() - start)
-          if duration > 2000 then
-            return
-          end
-          if vim.b.ts_parse_over then
-            actions.tree.find_file.fn()
-            last_visited = event.buf
-          else
-            vim.defer_fn(follow_node, 5)
-          end
-        end
         local parser_installed = require("nvim-treesitter.parsers").has_parser(vim.bo[event.buf].filetype)
 
         if parser_installed then
-          vim.schedule(function()
-            follow_node()
-          end)
-        else
           vim.defer_fn(function()
             actions.tree.find_file.fn()
             last_visited = event.buf
-          end, 20)
+          end, 5)
         end
       end,
     })
